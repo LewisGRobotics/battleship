@@ -11,6 +11,13 @@ app.use(cors())
 app.use('/api/game', gameRoutes)
 app.use('/api/player', playerRoutes)
 app.get('/api/health', (req, res) => res.json({ ok: true }))
+app.get('/api/debug', (req, res) => {
+  res.json({
+    mongodbUriSet: Boolean(process.env.MONGODB_URI),
+    nodeEnv: process.env.NODE_ENV || 'not set',
+    dbUriType: process.env.MONGODB_URI ? 'atlas' : 'local'
+  })
+})
 
 const dbUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/battleship'
 console.log('MONGODB_URI present:', Boolean(process.env.MONGODB_URI))
