@@ -13,6 +13,8 @@ app.use('/api/player', playerRoutes)
 app.get('/api/health', (req, res) => res.json({ ok: true }))
 
 const dbUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/battleship'
+console.log('MONGODB_URI present:', Boolean(process.env.MONGODB_URI))
+console.log('Using MongoDB URI:', dbUri.startsWith('mongodb+srv://') ? 'Atlas' : 'local')
 
 mongoose
   .connect(dbUri)
