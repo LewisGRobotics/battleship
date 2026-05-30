@@ -19,4 +19,10 @@ mongoose
   .then(() => console.log('Connected to MongoDB'))
   .catch((err) => console.error('MongoDB connection error:', err))
 
+// Error handler to surface unexpected errors in logs and return JSON
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err && err.stack ? err.stack : err)
+  res.status(500).json({ error: err && err.message ? err.message : 'Internal server error' })
+})
+
 module.exports = app
