@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createGame, getGame, joinGame, placeShips, fireMove, registerPlayer } from './api'
 import { generateShipPlacements, getBoardsForGame, getPlacementGrid, SHIP_TYPES } from './gameLogic'
 
@@ -19,11 +19,45 @@ function App() {
   const [error, setError] = useState('')
   const [placementShips, setPlacementShips] = useState([])
 
+  const refreshGame = useCallback(async () => {
+    if (!gameId) return
+    setStatus('loading')
+    try {
+      const latest = await getGame(gameId)
+      setGame(latest)
+      setError('')
+    } catch (err) {
+      setError(err.message || 'Unable to refresh game')
+    } finally {
+      setStatus('idle')
+    }
+  }, [gameId])
+
+  const currentPlayerId = player?.playerId
+  const me = game?.players?.find((p) => p.playerId === currentPlayerId)
+  const opponent = game?.players?.find((p) => p.playerId !== currentPlayerId)
+
   useEffect(() => {
     if (player && gameId) {
       refreshGame()
     }
-  }, [player, gameId])
+  }, [player, gameId, refreshGame])
+
+  useEffect(() => {
+    if (!player || !game?.gameId) return
+
+    const isOpponentTurn = game.status === 'active' && game.currentTurn !== player.playerId
+    const waitingForOpponentPlacement = game.status === 'placing' && me?.ready && !opponent?.ready
+    if (!isOpponentTurn && !waitingForOpponentPlacement) return
+
+    const interval = setInterval(() => {
+      if (status === 'idle') {
+        refreshGame()
+      }
+    }, 3000)
+
+    return () => clearInterval(interval)
+  }, [player, game?.gameId, game?.status, game?.currentTurn, player?.playerId, me?.ready, opponent?.ready, refreshGame, status])
 
   const savePlayer = async () => {
     if (!playerName.trim()) return
@@ -72,20 +106,6 @@ function App() {
     }
   }
 
-  const refreshGame = async () => {
-    if (!gameId) return
-    setStatus('loading')
-    try {
-      const latest = await getGame(gameId)
-      setGame(latest)
-      setError('')
-    } catch (err) {
-      setError(err.message || 'Unable to refresh game')
-    } finally {
-      setStatus('idle')
-    }
-  }
-
   const handleAutoPlace = () => {
     setPlacementShips(generateShipPlacements())
     setError('')
@@ -125,9 +145,6 @@ function App() {
     }
   }
 
-  const currentPlayerId = player?.playerId
-  const me = game?.players?.find((p) => p.playerId === currentPlayerId)
-  const opponent = game?.players?.find((p) => p.playerId !== currentPlayerId)
   const isYourTurn = game?.status === 'active' && game?.currentTurn === currentPlayerId
   const { ownBoard, enemyBoard } = useMemo(() => getBoardsForGame(game, currentPlayerId), [game, currentPlayerId])
   const placementGrid = useMemo(() => getPlacementGrid(placementShips), [placementShips])
