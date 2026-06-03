@@ -32,6 +32,7 @@ async function validatePlacement(ships) {
   }
 
   const used = new Set()
+  const forbidden = new Set()
 
   const nanoidFn = await getNanoid()
   return ships.map((ship) => {
@@ -84,7 +85,18 @@ async function validatePlacement(ships) {
       if (used.has(key)) {
         throw new Error('Ships cannot overlap.')
       }
+      if (forbidden.has(key)) {
+        throw new Error('Ships cannot be placed adjacent to each other.')
+      }
       used.add(key)
+    })
+
+    normalized.forEach((position) => {
+      [[position.x - 1, position.y], [position.x + 1, position.y], [position.x, position.y - 1], [position.x, position.y + 1]].forEach(([nx, ny]) => {
+        if (withinBounds(nx, ny)) {
+          forbidden.add(coordsKey(nx, ny))
+        }
+      })
     })
 
     return {

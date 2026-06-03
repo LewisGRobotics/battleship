@@ -10,9 +10,17 @@ export const SHIP_TYPES = [
 
 const coordsKey = (x, y) => `${x},${y}`
 
+const getOrthogonalNeighbors = (x, y) => [
+  [x - 1, y],
+  [x + 1, y],
+  [x, y - 1],
+  [x, y + 1]
+]
+
 export function generateShipPlacements() {
   const ships = []
   const occupied = new Set()
+  const forbidden = new Set()
 
   for (const shipType of SHIP_TYPES) {
     let attempt = 0
@@ -30,7 +38,7 @@ export function generateShipPlacements() {
         const posX = x + (vertical ? 0 : step)
         const posY = y + (vertical ? step : 0)
         const key = coordsKey(posX, posY)
-        if (occupied.has(key)) {
+        if (occupied.has(key) || forbidden.has(key)) {
           overlap = true
           break
         }
@@ -39,6 +47,13 @@ export function generateShipPlacements() {
 
       if (!overlap) {
         positions.forEach((pos) => occupied.add(coordsKey(pos.x, pos.y)))
+        positions.forEach((pos) => {
+          getOrthogonalNeighbors(pos.x, pos.y).forEach(([nx, ny]) => {
+            if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE) {
+              forbidden.add(coordsKey(nx, ny))
+            }
+          })
+        })
         ships.push({ shipId: `${shipType.type}-${Date.now()}-${attempt}`, type: shipType.type, size: shipType.size, positions })
         break
       }
