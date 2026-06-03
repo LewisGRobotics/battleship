@@ -261,7 +261,7 @@ router.post('/:gameId/move', async (req, res) => {
     game.status = 'finished'
     game.winner = playerId
     game.currentTurn = null
-  } else {
+  } else if (result === 'miss') {
     game.currentTurn = target.playerId
   }
 
