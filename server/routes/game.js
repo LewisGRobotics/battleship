@@ -20,26 +20,41 @@ const SHIP_DEFINITIONS = {
   Destroyer: 2
 }
 
+const SHIP_COUNTS = {
+  Carrier: 2,
+  Battleship: 2,
+  Cruiser: 3,
+  Submarine: 2,
+  Destroyer: 2
+}
+
 const VALID_SHIP_TYPES = Object.keys(SHIP_DEFINITIONS)
+const TOTAL_SHIP_COUNT = Object.values(SHIP_COUNTS).reduce((sum, value) => sum + value, 0)
 const GRID_SIZE = 10
 
 const withinBounds = (x, y) => Number.isInteger(x) && x >= 0 && x < GRID_SIZE && Number.isInteger(y) && y >= 0 && y < GRID_SIZE
 const coordsKey = (x, y) => `${x},${y}`
 
 async function validatePlacement(ships) {
-  if (!Array.isArray(ships) || ships.length !== VALID_SHIP_TYPES.length) {
-    throw new Error(`Must place ${VALID_SHIP_TYPES.length} ships.`)
+  if (!Array.isArray(ships) || ships.length !== TOTAL_SHIP_COUNT) {
+    throw new Error(`Must place ${TOTAL_SHIP_COUNT} ships.`)
   }
 
   const used = new Set()
   const forbidden = new Set()
+  const typeCounts = Object.fromEntries(VALID_SHIP_TYPES.map((type) => [type, 0]))
 
   const nanoidFn = await getNanoid()
-  return ships.map((ship) => {
+  const validated = ships.map((ship) => {
     const { type, positions } = ship
     if (!VALID_SHIP_TYPES.includes(type)) {
       throw new Error(`Invalid ship type: ${type}`)
     }
+
+    if (!SHIP_COUNTS[type] || typeCounts[type] >= SHIP_COUNTS[type]) {
+      throw new Error(`Invalid number of ${type} ships.`)
+    }
+    typeCounts[type] += 1
 
     const expectedSize = SHIP_DEFINITIONS[type]
     if (!Array.isArray(positions) || positions.length !== expectedSize) {
@@ -106,6 +121,14 @@ async function validatePlacement(ships) {
       positions: normalized.map((position) => ({ ...position, hit: false }))
     }
   })
+
+  for (const type of VALID_SHIP_TYPES) {
+    if (typeCounts[type] !== SHIP_COUNTS[type]) {
+      throw new Error(`Must place ${SHIP_COUNTS[type]} ${type} ships.`)
+    }
+  }
+
+  return validated
 }
 
 function findPlayer(game, playerId) {

@@ -1,12 +1,18 @@
 export const GRID_SIZE = 10
 
 export const SHIP_TYPES = [
-  { type: 'Carrier', size: 5 },
-  { type: 'Battleship', size: 4 },
-  { type: 'Cruiser', size: 3 },
-  { type: 'Submarine', size: 3 },
-  { type: 'Destroyer', size: 2 }
+  { type: 'Carrier', size: 5, count: 2 },
+  { type: 'Battleship', size: 4, count: 2 },
+  { type: 'Cruiser', size: 3, count: 3 },
+  { type: 'Submarine', size: 3, count: 2 },
+  { type: 'Destroyer', size: 2, count: 2 }
 ]
+
+export const SHIP_PLACEMENT_LIST = SHIP_TYPES.flatMap((ship) =>
+  Array.from({ length: ship.count }, () => ({ type: ship.type, size: ship.size }))
+)
+
+export const TOTAL_SHIP_COUNT = SHIP_PLACEMENT_LIST.length
 
 const coordsKey = (x, y) => `${x},${y}`
 
@@ -22,7 +28,7 @@ export function generateShipPlacements() {
   const occupied = new Set()
   const forbidden = new Set()
 
-  for (const shipType of SHIP_TYPES) {
+  for (const shipType of SHIP_PLACEMENT_LIST) {
     let attempt = 0
     while (attempt < 2000) {
       const vertical = Math.random() > 0.5

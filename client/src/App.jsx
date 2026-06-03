@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createGame, getGame, joinGame, placeShips, fireMove, registerPlayer } from './api'
-import { generateShipPlacements, getBoardsForGame, getPlacementGrid, SHIP_TYPES } from './gameLogic'
+import { generateShipPlacements, getBoardsForGame, getPlacementGrid, SHIP_TYPES, TOTAL_SHIP_COUNT } from './gameLogic'
 
 const STORAGE_KEY = 'battleship_player'
 
@@ -113,7 +113,7 @@ function App() {
 
   const submitPlacement = async () => {
     if (!player || !game) return
-    if (placementShips.length !== SHIP_TYPES.length) {
+    if (placementShips.length !== TOTAL_SHIP_COUNT) {
       setError('Place all ships before submitting.')
       return
     }
@@ -224,17 +224,17 @@ function App() {
                     <button onClick={handleAutoPlace} disabled={status !== 'idle'}>
                       Auto place ships
                     </button>
-                    <button onClick={submitPlacement} disabled={status !== 'idle' || placementShips.length !== SHIP_TYPES.length}>
+                    <button onClick={submitPlacement} disabled={status !== 'idle' || placementShips.length !== TOTAL_SHIP_COUNT}>
                       Submit placement
                     </button>
                   </div>
                   <div className="ship-list">
                     {SHIP_TYPES.map((ship) => {
-                      const placed = placementShips.some((entry) => entry.type === ship.type)
+                      const placedCount = placementShips.filter((entry) => entry.type === ship.type).length
                       return (
                         <div key={ship.type} className="ship-row">
                           <span>{ship.type}</span>
-                          <span>{placed ? 'Placed' : `Size ${ship.size}`}</span>
+                          <span>{placedCount}/{ship.count} placed</span>
                         </div>
                       )
                     })}
