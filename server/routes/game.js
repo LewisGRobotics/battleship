@@ -1,6 +1,14 @@
 const express = require('express')
-const { nanoid } = require('nanoid')
 const Game = require('../models/game')
+
+let nanoid
+async function getNanoid() {
+  if (!nanoid) {
+    const mod = await import('nanoid')
+    nanoid = mod.nanoid
+  }
+  return nanoid
+}
 
 const router = express.Router()
 
@@ -18,13 +26,14 @@ const GRID_SIZE = 10
 const withinBounds = (x, y) => Number.isInteger(x) && x >= 0 && x < GRID_SIZE && Number.isInteger(y) && y >= 0 && y < GRID_SIZE
 const coordsKey = (x, y) => `${x},${y}`
 
-function validatePlacement(ships) {
+async function validatePlacement(ships) {
   if (!Array.isArray(ships) || ships.length !== VALID_SHIP_TYPES.length) {
     throw new Error(`Must place ${VALID_SHIP_TYPES.length} ships.`)
   }
 
   const used = new Set()
 
+  const nanoidFn = await getNanoid()
   return ships.map((ship) => {
     const { type, positions } = ship
     if (!VALID_SHIP_TYPES.includes(type)) {
@@ -79,7 +88,7 @@ function validatePlacement(ships) {
     })
 
     return {
-      shipId: `${type}-${nanoid(6)}`,
+      shipId: `${type}-${nanoidFn(6)}`,
       type,
       size: expectedSize,
       positions: normalized.map((position) => ({ ...position, hit: false }))
@@ -101,7 +110,8 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'playerId and name are required.' })
   }
 
-  const gameId = nanoid(8).toUpperCase()
+  const nanoidFn = await getNanoid()
+  const gameId = nanoidFn(8).toUpperCase()
   const game = await Game.create({
     gameId,
     players: [{ playerId, name }],
@@ -171,7 +181,7 @@ router.post('/:gameId/place', async (req, res) => {
   }
 
   try {
-    const normalizedShips = validatePlacement(ships)
+    const normalizedShips = await validatePlacement(ships)
     player.ships = normalizedShips
     player.ready = true
 

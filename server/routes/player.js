@@ -1,5 +1,4 @@
 const express = require('express')
-const { nanoid } = require('nanoid')
 const Player = require('../models/player')
 
 const router = express.Router()
@@ -11,7 +10,7 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'Player name is required.' })
   }
 
-  const id = playerId || nanoid(10)
+  const id = playerId || (await import('nanoid')).nanoid(10)
 
   const player = await Player.findOneAndUpdate(
     { playerId: id },
