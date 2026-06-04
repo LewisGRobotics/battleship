@@ -12,6 +12,7 @@ export const SHIP_PLACEMENT_LIST = SHIP_TYPES.flatMap((ship) =>
   Array.from({ length: ship.count }, () => ({ type: ship.type, size: ship.size }))
 )
 
+export const SHIP_COUNTS_BY_TYPE = Object.fromEntries(SHIP_TYPES.map((ship) => [ship.type, ship.count]))
 export const TOTAL_SHIP_COUNT = SHIP_PLACEMENT_LIST.length
 
 const coordsKey = (x, y) => `${x},${y}`
@@ -64,6 +65,17 @@ export function generateShipPlacements() {
         break
       }
       attempt += 1
+    }
+  }
+
+  const generatedCounts = ships.reduce((acc, ship) => {
+    acc[ship.type] = (acc[ship.type] || 0) + 1
+    return acc
+  }, {})
+
+  for (const ship of SHIP_TYPES) {
+    if (generatedCounts[ship.type] !== ship.count) {
+      throw new Error(`generateShipPlacements produced wrong number of ${ship.type} ships.`)
     }
   }
 

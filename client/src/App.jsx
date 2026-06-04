@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createGame, getGame, joinGame, placeShips, fireMove, registerPlayer } from './api'
-import { generateShipPlacements, getBoardsForGame, getPlacementGrid, SHIP_TYPES, TOTAL_SHIP_COUNT } from './gameLogic'
+import { generateShipPlacements, getBoardsForGame, getPlacementGrid, SHIP_TYPES, TOTAL_SHIP_COUNT, SHIP_COUNTS_BY_TYPE } from './gameLogic'
 
 const STORAGE_KEY = 'battleship_player'
 
@@ -116,6 +116,18 @@ function App() {
     if (placementShips.length !== TOTAL_SHIP_COUNT) {
       setError('Place all ships before submitting.')
       return
+    }
+
+    const placementCounts = placementShips.reduce((counts, ship) => {
+      counts[ship.type] = (counts[ship.type] || 0) + 1
+      return counts
+    }, {})
+
+    for (const ship of SHIP_TYPES) {
+      if (placementCounts[ship.type] !== SHIP_COUNTS_BY_TYPE[ship.type]) {
+        setError(`Must place exactly ${SHIP_COUNTS_BY_TYPE[ship.type]} ${ship.type} ships.`)
+        return
+      }
     }
 
     setStatus('placing')
