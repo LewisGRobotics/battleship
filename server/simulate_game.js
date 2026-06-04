@@ -32,7 +32,6 @@
     { type: 'Carrier', positions: Array.from({ length: 5 }).map((_, i) => ({ x: i, y: 0 })) },
     { type: 'Battleship', positions: Array.from({ length: 4 }).map((_, i) => ({ x: i, y: 1 })) },
     { type: 'Cruiser', positions: Array.from({ length: 3 }).map((_, i) => ({ x: i, y: 2 })) },
-    { type: 'Submarine', positions: Array.from({ length: 3 }).map((_, i) => ({ x: i, y: 3 })) },
     { type: 'Destroyer', positions: Array.from({ length: 2 }).map((_, i) => ({ x: i, y: 4 })) }
   ])
 
@@ -40,7 +39,6 @@
     { type: 'Carrier', positions: Array.from({ length: 5 }).map((_, i) => ({ x: 5 + i, y: 9 })) },
     { type: 'Battleship', positions: Array.from({ length: 4 }).map((_, i) => ({ x: 6 + i, y: 8 })) },
     { type: 'Cruiser', positions: Array.from({ length: 3 }).map((_, i) => ({ x: 7 + i, y: 7 })) },
-    { type: 'Submarine', positions: Array.from({ length: 3 }).map((_, i) => ({ x: 7 + i, y: 6 })) },
     { type: 'Destroyer', positions: Array.from({ length: 2 }).map((_, i) => ({ x: 8 + i, y: 5 })) }
   ])
 

@@ -16,7 +16,6 @@ const SHIP_DEFINITIONS = {
   Carrier: 5,
   Battleship: 4,
   Cruiser: 3,
-  Submarine: 3,
   Destroyer: 2
 }
 
@@ -24,7 +23,6 @@ const SHIP_COUNTS = {
   Carrier: 2,
   Battleship: 2,
   Cruiser: 3,
-  Submarine: 2,
   Destroyer: 2
 }
 

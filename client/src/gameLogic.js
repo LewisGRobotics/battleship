@@ -4,7 +4,6 @@ export const SHIP_TYPES = [
   { type: 'Carrier', size: 5, count: 2 },
   { type: 'Battleship', size: 4, count: 2 },
   { type: 'Cruiser', size: 3, count: 3 },
-  { type: 'Submarine', size: 3, count: 2 },
   { type: 'Destroyer', size: 2, count: 2 }
 ]
 
