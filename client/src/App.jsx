@@ -19,17 +19,19 @@ function App() {
   const [error, setError] = useState('')
   const [placementShips, setPlacementShips] = useState([])
 
-  const refreshGame = useCallback(async () => {
+  const refreshGame = useCallback(async ({ auto = false } = {}) => {
     if (!gameId) return
-    setStatus('loading')
+    if (!auto) setStatus('loading')
     try {
       const latest = await getGame(gameId)
       setGame(latest)
-      setError('')
+      if (!auto) setError('')
     } catch (err) {
-      setError(err.message || 'Unable to refresh game')
+      if (!auto) {
+        setError(err.message || 'Unable to refresh game')
+      }
     } finally {
-      setStatus('idle')
+      if (!auto) setStatus('idle')
     }
   }, [gameId])
 
@@ -52,9 +54,9 @@ function App() {
 
     const interval = setInterval(() => {
       if (status === 'idle') {
-        refreshGame()
+        refreshGame({ auto: true })
       }
-    }, 3000)
+    }, 500)
 
     return () => clearInterval(interval)
   }, [player, game?.gameId, game?.status, game?.currentTurn, player?.playerId, me?.ready, opponent?.ready, refreshGame, status])

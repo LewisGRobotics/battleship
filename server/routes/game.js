@@ -271,11 +271,13 @@ router.post('/:gameId/move', async (req, res) => {
 
   let result = 'miss'
   let sunkShipType = null
+  let shipType = null
 
   for (const ship of target.ships || []) {
     const position = ship.positions.find((pos) => coordsKey(pos.x, pos.y) === shotKey)
     if (position) {
       position.hit = true
+      shipType = ship.type
       result = ship.positions.every((pos) => pos.hit) ? 'sunk' : 'hit'
       if (result === 'sunk') {
         sunkShipType = ship.type
@@ -284,7 +286,7 @@ router.post('/:gameId/move', async (req, res) => {
     }
   }
 
-  game.moves.push({ playerId, x: shotX, y: shotY, result, sunkShipType })
+  game.moves.push({ playerId, x: shotX, y: shotY, result, shipType, sunkShipType })
 
   const opponentStillAlive = (target.ships || []).some((ship) =>
     ship.positions.some((position) => !position.hit)

@@ -115,19 +115,38 @@ export function getBoardsForGame(game, playerId) {
   const opponent = game.players.find((player) => player.playerId !== playerId)
 
   const shipMap = new Map()
+  const sunkOwnPositions = new Set()
   me?.ships?.forEach((ship) => {
+    const shipSunk = ship.positions.every((pos) => pos.hit)
     ship.positions.forEach((pos) => {
-      shipMap.set(coordsKey(pos.x, pos.y), pos)
+      shipMap.set(coordsKey(pos.x, pos.y), { ...pos, shipSunk })
+      if (shipSunk) {
+        sunkOwnPositions.add(coordsKey(pos.x, pos.y))
+      }
     })
   })
 
-  const myShots = new Map()
+  const myShots = []
   const opponentShots = new Map()
+  const hitShotsByType = {}
+  const sunkShotCoordinates = new Set()
 
   ;(game.moves || []).forEach((move) => {
     const key = coordsKey(move.x, move.y)
     if (move.playerId === playerId) {
-      myShots.set(key, move)
+      myShots.push({ ...move, key })
+      if (move.shipType && move.result === 'hit') {
+        hitShotsByType[move.shipType] = hitShotsByType[move.shipType] || []
+        hitShotsByType[move.shipType].push(key)
+      }
+      if (move.shipType && move.result === 'sunk') {
+        hitShotsByType[move.shipType] = hitShotsByType[move.shipType] || []
+        hitShotsByType[move.shipType].forEach((shotKey) => {
+          sunkShotCoordinates.add(shotKey)
+        })
+        sunkShotCoordinates.add(key)
+        hitShotsByType[move.shipType] = []
+      }
     } else {
       opponentShots.set(key, move)
     }
@@ -139,6 +158,9 @@ export function getBoardsForGame(game, playerId) {
     const opponentShot = opponentShots.get(key)
 
     if (shipPos) {
+      if (sunkOwnPositions.has(key)) {
+        return { ...cell, type: 'hit', label: '💀' }
+      }
       if (shipPos.hit) {
         return { ...cell, type: 'hit', label: '💥' }
       }
@@ -154,11 +176,15 @@ export function getBoardsForGame(game, playerId) {
 
   const enemyBoard = emptyEnemy.map((cell) => {
     const key = coordsKey(cell.x, cell.y)
-    const shot = myShots.get(key)
+    const shot = myShots.find((move) => move.key === key)
     if (!shot) return cell
 
     if (shot.result === 'miss') {
       return { ...cell, type: 'miss', label: '•' }
+    }
+
+    if (sunkShotCoordinates.has(key)) {
+      return { ...cell, type: 'hit', label: '💀' }
     }
 
     return { ...cell, type: 'hit', label: '🔥' }

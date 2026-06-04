@@ -35,6 +35,7 @@ const moveSchema = new mongoose.Schema(
     x: Number,
     y: Number,
     result: { type: String, enum: ['pending', 'miss', 'hit', 'sunk'], default: 'pending' },
+    shipType: { type: String, default: null },
     sunkShipType: { type: String, default: null },
     createdAt: { type: Date, default: Date.now }
   },
