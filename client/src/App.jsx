@@ -18,6 +18,7 @@ function App() {
   const [status, setStatus] = useState('idle')
   const [error, setError] = useState('')
   const [placementShips, setPlacementShips] = useState([])
+  const [boardsHorizontal, setBoardsHorizontal] = useState(true)
 
   const refreshGame = useCallback(async ({ auto = false } = {}) => {
     if (!gameId) return
@@ -275,14 +276,21 @@ function App() {
           </button>
 
           {(game.status === 'active' || game.status === 'finished') && (
-            <div className="boards-row">
-              <div className="board-panel">
-                <h3>Your fleet</h3>
-                {renderBoard(ownBoard)}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+                <button onClick={() => setBoardsHorizontal((v) => !v)} style={{ padding: '8px 12px', borderRadius: 10 }}>
+                  {boardsHorizontal ? 'Stack boards' : 'Side-by-side'}
+                </button>
               </div>
-              <div className="board-panel">
-                <h3>Enemy waters</h3>
-                {renderBoard(enemyBoard, true)}
+              <div className={`boards-row ${boardsHorizontal ? 'horizontal' : 'vertical'}`}>
+                <div className="board-panel">
+                  <h3>Your fleet</h3>
+                  {renderBoard(ownBoard)}
+                </div>
+                <div className="board-panel">
+                  <h3>Enemy waters</h3>
+                  {renderBoard(enemyBoard, true)}
+                </div>
               </div>
             </div>
           )}
