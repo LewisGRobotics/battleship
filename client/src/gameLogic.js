@@ -26,6 +26,7 @@ const getOrthogonalNeighbors = (x, y) => [
 export function generateShipPlacements() {
   const ships = []
   const occupied = new Map()
+  const shipTouchPartner = new Map()
 
   for (const shipType of SHIP_PLACEMENT_LIST) {
     let attempt = 0
@@ -38,6 +39,7 @@ export function generateShipPlacements() {
       const y = Math.floor(Math.random() * (maxY + 1))
       const positions = []
       const adjacencyCounts = new Map()
+      const touchedShipIndexes = new Set()
       let invalidPlacement = false
 
       for (let step = 0; step < shipType.size; step += 1) {
@@ -52,13 +54,25 @@ export function generateShipPlacements() {
         getOrthogonalNeighbors(posX, posY).forEach(([nx, ny]) => {
           const neighborKey = coordsKey(nx, ny)
           const neighborShipIndex = occupied.get(neighborKey)
-          if (neighborShipIndex != null) {
-            const count = adjacencyCounts.get(neighborShipIndex) || 0
-            if (count >= 1) {
-              invalidPlacement = true
-            } else {
-              adjacencyCounts.set(neighborShipIndex, count + 1)
-            }
+          if (neighborShipIndex == null) {
+            return
+          }
+
+          const existingPartner = shipTouchPartner.get(neighborShipIndex)
+          if (existingPartner != null && existingPartner !== ships.length) {
+            invalidPlacement = true
+            return
+          }
+
+          const count = adjacencyCounts.get(neighborShipIndex) || 0
+          if (count >= 1) {
+            invalidPlacement = true
+            return
+          }
+          adjacencyCounts.set(neighborShipIndex, count + 1)
+          touchedShipIndexes.add(neighborShipIndex)
+          if (touchedShipIndexes.size > 1) {
+            invalidPlacement = true
           }
         })
 
@@ -68,6 +82,11 @@ export function generateShipPlacements() {
 
       if (!invalidPlacement) {
         positions.forEach((pos) => occupied.set(coordsKey(pos.x, pos.y), ships.length))
+        if (touchedShipIndexes.size === 1) {
+          const partnerIndex = [...touchedShipIndexes][0]
+          shipTouchPartner.set(partnerIndex, ships.length)
+          shipTouchPartner.set(ships.length, partnerIndex)
+        }
         ships.push({ shipId: `${shipType.type}-${Date.now()}-${attempt}`, type: shipType.type, size: shipType.size, positions })
         break
       }

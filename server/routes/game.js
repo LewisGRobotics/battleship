@@ -115,6 +115,7 @@ async function validatePlacement(ships) {
   })
 
   const adjacencyCounts = new Map()
+  const shipContacts = new Map()
   normalizedShips.forEach((ship, shipIndex) => {
     ship.positions.forEach((position) => {
       [[position.x - 1, position.y], [position.x + 1, position.y], [position.x, position.y - 1], [position.x, position.y + 1]].forEach(([nx, ny]) => {
@@ -125,17 +126,33 @@ async function validatePlacement(ships) {
         const pairKey = shipIndex < neighborShipIndex
           ? `${shipIndex}|${neighborShipIndex}`
           : `${neighborShipIndex}|${shipIndex}`
-        if (!adjacencyCounts.has(pairKey)) {
-          adjacencyCounts.set(pairKey, 0)
-        }
-
         if (shipIndex < neighborShipIndex) {
-          const count = adjacencyCounts.get(pairKey) + 1
+          const count = (adjacencyCounts.get(pairKey) || 0) + 1
           if (count > 1) {
             throw new Error('Ships may touch, but may not share more than one adjacent section with the same other ship.')
           }
           adjacencyCounts.set(pairKey, count)
         }
+
+        if (!shipContacts.has(shipIndex)) {
+          shipContacts.set(shipIndex, new Set())
+        }
+        if (!shipContacts.has(neighborShipIndex)) {
+          shipContacts.set(neighborShipIndex, new Set())
+        }
+
+        const shipContactSet = shipContacts.get(shipIndex)
+        const neighborContactSet = shipContacts.get(neighborShipIndex)
+
+        if (!shipContactSet.has(neighborShipIndex) && shipContactSet.size >= 1) {
+          throw new Error('Each ship may only share space with one other ship.')
+        }
+        if (!neighborContactSet.has(shipIndex) && neighborContactSet.size >= 1) {
+          throw new Error('Each ship may only share space with one other ship.')
+        }
+
+        shipContactSet.add(neighborShipIndex)
+        neighborContactSet.add(shipIndex)
       })
     })
   })
