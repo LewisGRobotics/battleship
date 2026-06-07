@@ -25,8 +25,7 @@ const getOrthogonalNeighbors = (x, y) => [
 
 export function generateShipPlacements() {
   const ships = []
-  const occupied = new Set()
-  const forbidden = new Set()
+  const occupied = new Map()
 
   for (const shipType of SHIP_PLACEMENT_LIST) {
     let attempt = 0
@@ -38,28 +37,37 @@ export function generateShipPlacements() {
       const x = Math.floor(Math.random() * (maxX + 1))
       const y = Math.floor(Math.random() * (maxY + 1))
       const positions = []
-      let overlap = false
+      const adjacencyCounts = new Map()
+      let invalidPlacement = false
 
       for (let step = 0; step < shipType.size; step += 1) {
         const posX = x + (vertical ? 0 : step)
         const posY = y + (vertical ? step : 0)
         const key = coordsKey(posX, posY)
-        if (occupied.has(key) || forbidden.has(key)) {
-          overlap = true
+        if (occupied.has(key)) {
+          invalidPlacement = true
           break
         }
+
+        getOrthogonalNeighbors(posX, posY).forEach(([nx, ny]) => {
+          const neighborKey = coordsKey(nx, ny)
+          const neighborShipIndex = occupied.get(neighborKey)
+          if (neighborShipIndex != null) {
+            const count = adjacencyCounts.get(neighborShipIndex) || 0
+            if (count >= 1) {
+              invalidPlacement = true
+            } else {
+              adjacencyCounts.set(neighborShipIndex, count + 1)
+            }
+          }
+        })
+
+        if (invalidPlacement) break
         positions.push({ x: posX, y: posY, hit: false })
       }
 
-      if (!overlap) {
-        positions.forEach((pos) => occupied.add(coordsKey(pos.x, pos.y)))
-        positions.forEach((pos) => {
-          getOrthogonalNeighbors(pos.x, pos.y).forEach(([nx, ny]) => {
-            if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE) {
-              forbidden.add(coordsKey(nx, ny))
-            }
-          })
-        })
+      if (!invalidPlacement) {
+        positions.forEach((pos) => occupied.set(coordsKey(pos.x, pos.y), ships.length))
         ships.push({ shipId: `${shipType.type}-${Date.now()}-${attempt}`, type: shipType.type, size: shipType.size, positions })
         break
       }

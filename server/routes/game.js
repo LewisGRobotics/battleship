@@ -39,11 +39,11 @@ async function validatePlacement(ships) {
   }
 
   const used = new Set()
-  const forbidden = new Set()
+  const shipIndexByCoord = new Map()
   const typeCounts = Object.fromEntries(VALID_SHIP_TYPES.map((type) => [type, 0]))
 
   const nanoidFn = await getNanoid()
-  const validated = ships.map((ship) => {
+  const normalizedShips = ships.map((ship) => {
     const { type, positions } = ship
     if (!VALID_SHIP_TYPES.includes(type)) {
       throw new Error(`Invalid ship type: ${type}`)
@@ -98,27 +98,54 @@ async function validatePlacement(ships) {
       if (used.has(key)) {
         throw new Error('Ships cannot overlap.')
       }
-      if (forbidden.has(key)) {
-        throw new Error('Ships cannot be placed adjacent to each other.')
-      }
       used.add(key)
     })
 
-    normalized.forEach((position) => {
-      [[position.x - 1, position.y], [position.x + 1, position.y], [position.x, position.y - 1], [position.x, position.y + 1]].forEach(([nx, ny]) => {
-        if (withinBounds(nx, ny)) {
-          forbidden.add(coordsKey(nx, ny))
-        }
-      })
-    })
-
     return {
-      shipId: `${type}-${nanoidFn(6)}`,
       type,
       size: expectedSize,
       positions: normalized.map((position) => ({ ...position, hit: false }))
     }
   })
+
+  normalizedShips.forEach((ship, shipIndex) => {
+    ship.positions.forEach((position) => {
+      shipIndexByCoord.set(coordsKey(position.x, position.y), shipIndex)
+    })
+  })
+
+  const adjacencyCounts = new Map()
+  normalizedShips.forEach((ship, shipIndex) => {
+    ship.positions.forEach((position) => {
+      [[position.x - 1, position.y], [position.x + 1, position.y], [position.x, position.y - 1], [position.x, position.y + 1]].forEach(([nx, ny]) => {
+        if (!withinBounds(nx, ny)) return
+        const neighborShipIndex = shipIndexByCoord.get(coordsKey(nx, ny))
+        if (neighborShipIndex == null || neighborShipIndex === shipIndex) return
+
+        const pairKey = shipIndex < neighborShipIndex
+          ? `${shipIndex}|${neighborShipIndex}`
+          : `${neighborShipIndex}|${shipIndex}`
+        if (!adjacencyCounts.has(pairKey)) {
+          adjacencyCounts.set(pairKey, 0)
+        }
+
+        if (shipIndex < neighborShipIndex) {
+          const count = adjacencyCounts.get(pairKey) + 1
+          if (count > 1) {
+            throw new Error('Ships may touch, but may not share more than one adjacent section with the same other ship.')
+          }
+          adjacencyCounts.set(pairKey, count)
+        }
+      })
+    })
+  })
+
+  const validated = normalizedShips.map((ship) => ({
+    shipId: `${ship.type}-${nanoidFn(6)}`,
+    type: ship.type,
+    size: ship.size,
+    positions: ship.positions
+  }))
 
   for (const type of VALID_SHIP_TYPES) {
     if (typeCounts[type] !== SHIP_COUNTS[type]) {
